@@ -1144,7 +1144,7 @@ class HUBDatasetStats():
             with open(stats_path, 'w') as f:
                 json.dump(self.stats, f)  # save stats.json
         if verbose:
-            print(json.dumps(self.stats, indent=2, sort_keys=False))
+            print(json.dumps(self.stats, indent=4, sort_keys=False))
         return self.stats
 
     def process_images(self):

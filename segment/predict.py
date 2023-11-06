@@ -33,6 +33,10 @@ import os
 import platform
 import sys
 from pathlib import Path
+import pandas
+import numpy as np
+import cv2
+
 
 import torch
 
@@ -52,11 +56,22 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.segment.general import masks2segments, process_mask, process_mask_native
 from utils.torch_utils import select_device, smart_inference_mode
 
-
+# what change i need to do in this to make it take a video as input and give a video as output
+# i need to change the source and save path
 @smart_inference_mode()
+def areaYporcentaje(c1):
+    # Cálculo del área para cada cuadro delimitador
+    area = (c1[2] - c1[0]) * (c1[3] - c1[1])
+    area_minima = 0
+    area_total = 265154
+    porcentaje = (area - area_minima) / (area_total - area_minima) * 100
+    #convert porcentaje to int 
+    porcentaje = int(porcentaje)
+    return porcentaje
+
 def run(
-    weights=ROOT / 'yolov5s-seg.pt',  # model.pt path(s)
-    source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
+    weights=ROOT / 'yolov8l.pt',  # model.pt path(s) yolov8l.pt yolov5s-seg.pt
+    source= 0,  # file/dir/URL/glob/screen/0(webcam)
     data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
     imgsz=(640, 640),  # inference size (height, width)
     conf_thres=0.25,  # confidence threshold
@@ -64,10 +79,10 @@ def run(
     max_det=1000,  # maximum detections per image
     device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
     view_img=False,  # show results
-    save_txt=False,  # save results to *.txt
+    save_txt=True,  # save results to *.txt
     save_conf=False,  # save confidences in --save-txt labels
     save_crop=False,  # save cropped prediction boxes
-    nosave=False,  # do not save images/videos
+    nosave=True,  # do not save images/videos
     classes=None,  # filter by class: --class 0, or --class 0 2 3
     agnostic_nms=False,  # class-agnostic NMS
     augment=False,  # augmented inference
@@ -76,15 +91,16 @@ def run(
     project=ROOT / 'runs/predict-seg',  # save results to project/name
     name='exp',  # save results to project/name
     exist_ok=False,  # existing project/name ok, do not increment
-    line_thickness=3,  # bounding box thickness (pixels)
+    line_thickness=4,  # bounding box thickness (pixels)
     hide_labels=False,  # hide labels
     hide_conf=False,  # hide confidences
     half=False,  # use FP16 half-precision inference
-    dnn=False,  # use OpenCV DNN for ONNX inference
+    dnn=True,  # use OpenCV DNN for ONNX inference
     vid_stride=1,  # video frame-rate stride
-    retina_masks=False,
+    retina_masks=True, # use retina masks for higher accuracy
 ):
-    source = str(source)
+    #source = 'http://192.168.100.114:4747/video'
+    source = '0'
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
@@ -93,7 +109,7 @@ def run(
     if is_url and is_file:
         source = check_file(source)  # download
 
-    # Directories
+    # Directories"
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 
@@ -107,7 +123,7 @@ def run(
     bs = 1  # batch_size
     if webcam:
         view_img = check_imshow(warn=True)
-        dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
+        dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride) 
         bs = len(dataset)
     elif screenshot:
         dataset = LoadScreenshots(source, img_size=imgsz, stride=stride, auto=pt)
@@ -151,9 +167,53 @@ def run(
             save_path = str(save_dir / p.name)  # im.jpg
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
+            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            
             if len(det):
+                # Rescale boxes from img_size to im0 size
+                
+                det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+                for *xyxy, conf, cls in reversed(det):
+                    c1= (int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3]))
+                    c2= (int(xyxy[4]), int(xyxy[5]), int(xyxy[6]), int(xyxy[7]))
+                    c3= (int(xyxy[8]), int(xyxy[9]), int(xyxy[10]), int(xyxy[11]))
+                    c4= (int(xyxy[12]), int(xyxy[13]), int(xyxy[14]), int(xyxy[15]))
+                    c5= (int(xyxy[16]), int(xyxy[17]), int(xyxy[18]), int(xyxy[19]))
+                    #areaC1= (c1[2] - c1[0]) * (c1[3] - c1[1])
+                    #convertir el area a porcentaje del total de la pantalla que es 640*480
+                    # Supongamos que tienes el área calculada y los valores para el área mínima y el área total
+                    #area_calculada = areaC1  # Este es un ejemplo, debes reemplazarlo con tu valor de área calculada
+                    #area_minima = 0
+                    #area_total = 265154
+
+                    # Calcular el porcentaje
+                    #porcentaje = (area_calculada - area_minima) / (area_total - area_minima) * 100
+                    porcentajes1 = areaYporcentaje(c1)
+                    porcentajes2 = areaYporcentaje(c2)
+                    porcentajes3 = areaYporcentaje(c3)
+                    porcentajes4 = areaYporcentaje(c4)
+                    porcentajes5 = areaYporcentaje(c5)
+                    porcentajes = [porcentajes1, porcentajes2, porcentajes3, porcentajes4, porcentajes5]
+#y si cambio todo el concepto? que el carro vaya hacia objetos?
+
+
+                    center_point = (int((c1[0] + c2[0]) / 2), int((c1[1] + c2[1]) / 2))
+                    circle = cv2.circle(im0, center_point, 5, (0, 0, 255), 2)
+                    text_coord = cv2.putText(im0, f"{center_point}", center_point, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+                    cordenadas = [(c1), (c2), (c3), (c4), (c5)]
+                    #cv2.rectangle(im0, cordenadas1, cordenadas2, (0, 0, 255), 2)
+                    area = (c2[0] * c2[1])
+                """
+                det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+                for *xyxy, conf, cls in reversed(det):
+                    c1, c2 = (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3]))
+                    center_point = round((c1[0]+c2[0])/2), round((c1[1]+c2[1])/2)
+                    circle = cv2.circle(im0,center_point,5,(0,255,0),2)
+                    text_coord = cv2.putText(im0,str(center_point),center_point,cv2.FONT_HERSHEY_PLAIN,2,(0,0,255))"""
+
+
                 if retina_masks:
                     # scale bbox first the crop masks
                     det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()  # rescale boxes to im0 size
@@ -171,7 +231,38 @@ def run(
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
+                    #based in the number of detections per class i can print the area of the box
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    #sencillo, si esta madre llega a acercarse un 80% aprox ps que se detenga con q
+
+
+                    if porcentajes[0] > 1:
+                        s += f"{porcentajes[0]}%  "
+                        
+
+                    """
+                    if porcentajes[1] > 1:
+                        s += f"{porcentajes[1]}%  "
+                    if porcentajes[2] > 1:
+                        s += f"{porcentajes[2]}%  "
+                    if porcentajes[3] > 1:
+                        s += f"{porcentajes[3]}%  "
+                    if porcentajes[4] > 1:
+                        s += f"{porcentajes[4]}%  "
+                        """
+                # Print percentage of the area of the box based if the area is bigger than 0.5% of the total area of the screen
+                #for i in range(5):
+
+                if names[int(c)] == "person":
+                    if 1 < porcentajes[0] < 80:
+                        s += f"camine hacia adelante: "
+                    if porcentajes[0] > 80:
+                        s += f"detente: "
+                else :
+                    s += f"da vueltas como pendejo "
+                                
+                #cordenadas[0]
+
 
                 # Mask plotting
                 annotator.masks(
@@ -179,19 +270,29 @@ def run(
                     colors=[colors(x, True) for x in det[:, 5]],
                     im_gpu=torch.as_tensor(im0, dtype=torch.float16).to(device).permute(2, 0, 1).flip(0).contiguous() /
                     255 if retina_masks else im[i])
-
+                dsf = 0
                 # Write results
                 for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
+                    #how can i print the cordinates of the boxes or his area? 
+                    # Cálculo del área para cada cuadro delimitador
+                    #dsf = dsf + 1
+                    #while dsf > 2:
+                    #   print("area: ", (xyxy[2] - xyxy[0]) * (xyxy[3] - xyxy[1]))
+                    #    dsf = dsf - 1
+                    
+
                     if save_txt:  # Write to file
                         seg = segments[j].reshape(-1)  # (n,2) to (n*2)
                         line = (cls, *seg, conf) if save_conf else (cls, *seg)  # label format
+                        
                         with open(f'{txt_path}.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        annotator.box_label(xyxy, label, color=colors(c, True) )
                         # annotator.draw.polygon(segments[j], outline=colors(c, True), width=3)
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
@@ -203,6 +304,7 @@ def run(
                     windows.append(p)
                     cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
                     cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
+                    
                 cv2.imshow(str(p), im0)
                 if cv2.waitKey(1) == ord('q'):  # 1 millisecond
                     exit()
@@ -224,10 +326,22 @@ def run(
                             fps, w, h = 30, im0.shape[1], im0.shape[0]
                         save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                        
+                        
                     vid_writer[i].write(im0)
 
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        #and print the bounds of a box
+
+        print(f"{s}{'' if len(det) else '(no detections), da vueltas como imbezil:'}{dt[1].dt * 1E3:.1f} ms")
+ 
+
+
+
+
+
+
+
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -272,6 +386,7 @@ def parse_opt():
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
+    
     return opt
 
 
