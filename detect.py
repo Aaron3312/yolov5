@@ -34,6 +34,11 @@ import os
 import platform
 import sys
 from pathlib import Path
+from tkinter import *
+import socket
+import datetime
+
+
 
 
 
@@ -102,12 +107,50 @@ def run(
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
 ):
+    # Initialize Firebase
     cred = credentials.Certificate("credentials.json")
     firebase_admin.initialize_app(cred, {"databaseURL": "https://iot-robotarm-default-rtdb.firebaseio.com/"})
     ref = db.reference('/IAROB')
     ref.delete()
 
     print("Se eliminaron todos los documentos en la colección especificada.")
+    # end firebase
+
+    # Initialize Car Code
+    """
+    ESP_IP = "192.168.168.20"
+    ESP_PORT = 8266
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def key_pressed(c):
+        print("Tecla presionada: ", c.char)
+        s.send(c.char.encode())
+    def key_released(c):
+        print("Tecla liberada: ", c.char)
+        s.send(c.char.encode())
+    root = Tk()
+    root.title("Control de Carro")
+
+    frame = Frame(root)
+    lbl_title = Label(frame, text="Control de Carro ROBOT")
+    lbl_title.grid(row=0, column=0, pady=10, padx=10)
+
+    frame.bind ("<KeyPress>", key_pressed)
+    frame.bind ("<KeyRelease>", key_released)
+
+    s.connect((ESP_IP, ESP_PORT))
+
+    frame.pack()
+    frame.focus_set()
+
+    root.mainloop()
+    """
+    # end car code
+
+
+
+
+
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -119,6 +162,7 @@ def run(
     porcentajed3 = []
     objetos_detectados = []
     cordenados = []
+    tiempod = []
     po = 0
 
 
@@ -235,15 +279,22 @@ def run(
                     #objetos detectados unicamente tiene que tener los objetos detectados en todo el video
                     nuevo_string = names[int(c)]
                     nuevo_cordenado = center_point
+                    timestamp = datetime.datetime.now()
+                    # convertimos el timestamp a formato hora minuto segundo
+                    timestamp = timestamp.strftime("%H:%M:%S")
+                    timestamp = str (timestamp)
+
+
+
                     if nuevo_string not in objetos_detectados:
                         objetos_detectados.append(nuevo_string)
                         cordenados.append(nuevo_cordenado)
                         porcentajed3.append(sds)
+                        tiempod.append(timestamp)                        
                         print("Se detecto un nuevo objeto")
                     # Añadir el nuevo string al vector si no existe
                         
                     if nuevo_string in objetos_detectados:
-                        print("El objeto ya se encuentra en la lista")
                         # actualizar el valor de porcentaje de cercania y cordenadas
                         # buscar el indice del objeto en el vector
                         indice = objetos_detectados.index(nuevo_string)
@@ -251,15 +302,22 @@ def run(
                         porcentajed3[indice] = sds
                         # actualizar el valor de cordenadas
                         cordenados[indice] = nuevo_cordenado
+                        # actualizar el valor de tiempo
+                        tiempod[indice] = timestamp
+
                         # actualizar el valor de objetos detectados
                         #objetos_detectados[indice] = nuevo_string
                         #print(objetos_detectados)
+                        # actualizar el valor de tiempo
+
+
 
 
                     if determinalo % 100 == 0:
                         ref.update({'objetos detectados': objetos_detectados})
                         ref.update({'cordenados': cordenados})
                         ref.update({'porcentaje_de_cercania': porcentajed3})
+                        ref.update({'tiempo': tiempod})
 
                     # firebase data
 
