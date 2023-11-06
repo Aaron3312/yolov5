@@ -15,7 +15,7 @@ i = 1
 while i != 0:
     # Inicializa la base de datos de Firebase
 
-
+    """
     # Configura tu clave de API
     openai.api_key = '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'
 
@@ -30,23 +30,29 @@ while i != 0:
     )
      #Imprime la respuesta generada por GPT-3
     print(response.choices[0].text)
+    """
     objetos = db.reference('/IAROB/objetos detectados')
     objetos1 = []
     objetos1.append(objetos.get())
-   
+    
     cordenadas = db.reference('/IAROB/cordenados')
     porcentajes = db.reference('/IAROB/porcentaje_de_cercania')
+    tiempo = db.reference('/IAROB/tiempo')
     cordenadas1 = []
     cordenadas1.append(cordenadas.get())
     porcentajes1 = []
     porcentajes1.append(porcentajes.get())
+    tiempo1 = []
+    tiempo1.append(tiempo.get())
+
 
 
     # Datos
     datos = {
         "Objeto": objetos1[0],
         "Coordenadas": cordenadas1[0],
-        "Cercanía": porcentajes1[0]
+        "Cercanía": porcentajes1[0],
+        "Tiempo": tiempo1[0]
     }
 
     # Crear un DataFrame a partir de los datos
@@ -57,4 +63,4 @@ while i != 0:
     # Imprimir el DataFrame
     print(tabulate(df, headers="keys", tablefmt="grid"))
     #sleep 10 seconds
-    time.sleep(20)
+    time.sleep(5)
