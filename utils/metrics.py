@@ -216,6 +216,7 @@ class ConfusionMatrix:
 
     def print(self):
         for i in range(self.nc + 1):
+            print("wrt")
             print(' '.join(map(str, self.matrix[i])))
 
 
@@ -291,6 +292,7 @@ def bbox_ioa(box1, box2, eps=1e-7):
     # Get the coordinates of bounding boxes
     b1_x1, b1_y1, b1_x2, b1_y2 = box1
     b2_x1, b2_y1, b2_x2, b2_y2 = box2.T
+    print(b1_x1, b1_y1, b1_x2, b1_y2)
 
     # Intersection area
     inter_area = (np.minimum(b1_x2, b2_x2) - np.maximum(b1_x1, b2_x1)).clip(0) * \

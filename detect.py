@@ -35,7 +35,13 @@ import platform
 import sys
 from pathlib import Path
 
+
+
 import torch
+
+
+import firebase_admin 
+from firebase_admin import db, credentials
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -53,6 +59,19 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 
 @smart_inference_mode()
+
+
+
+def areaYporcentaje(sd):
+    # Cálculo del área para cada cuadro delimitador
+    area = (sd[2] - sd[0]) * (sd[3] - sd[1])
+    area_minima = 0
+    area_total = 265154
+    porcentaje = (area - area_minima) / (area_total - area_minima) * 100
+    #convert porcentaje to int 
+    porcentaje = int(porcentaje)
+    return porcentaje
+
 def run(
         weights=ROOT / 'yolov5s.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
@@ -83,15 +102,30 @@ def run(
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
 ):
+    cred = credentials.Certificate("credentials.json")
+    firebase_admin.initialize_app(cred, {"databaseURL": "https://iot-robotarm-default-rtdb.firebaseio.com/"})
+    ref = db.reference('/IAROB')
+    ref.delete()
+
+    print("Se eliminaron todos los documentos en la colección especificada.")
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.streams') or (is_url and not is_file)
     screenshot = source.lower().startswith('screen')
+    desiteracion = 0
+    objets = []
+    porcentajed3 = []
+    objetos_detectados = []
+    cordenados = []
+    po = 0
+
+
     if is_url and is_file:
         source = check_file(source)  # download
 
+    
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
@@ -101,6 +135,7 @@ def run(
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
+    determinalo = 0
 
     # Dataloader
     bs = 1  # batch_size
@@ -114,10 +149,12 @@ def run(
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
     vid_path, vid_writer = [None] * bs, [None] * bs
 
+
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, im, im0s, vid_cap, s in dataset:
+        determinalo += 1
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -168,18 +205,75 @@ def run(
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+                      # Rescale boxes from img_size to im0 size
+                      
+                for *xyxy, conf, cls in reversed(det):
+                    c1, c2 = (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3]))
+                    center_point = round((c1[0]+c2[0])/2), round((c1[1]+c2[1])/2)
+                    circle = cv2.circle(im0,center_point,5,(0,255,0),2)
+                    text_coord = cv2.putText(im0,str(center_point),center_point,cv2.FONT_HERSHEY_PLAIN,2,(0,0,255))
+
+
 
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-
+                
+                
+                
+                                
+            
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     c = int(cls)  # integer class
                     label = names[c] if hide_conf else f'{names[c]}'
                     confidence = float(conf)
                     confidence_str = f'{confidence:.2f}'
+                    sd = (int (xyxy[0]),int(xyxy[1]),int(xyxy[2]),(int(xyxy[3])))
+                    sds = areaYporcentaje(sd)
+                    s += f"{n} {names[int(c)]} {sds} %{'s' * (n > 1)}, "  # add to 
+                    #objetos detectados unicamente tiene que tener los objetos detectados en todo el video
+                    nuevo_string = names[int(c)]
+                    nuevo_cordenado = center_point
+                    if nuevo_string not in objetos_detectados:
+                        objetos_detectados.append(nuevo_string)
+                        cordenados.append(nuevo_cordenado)
+                        porcentajed3.append(sds)
+                        print("Se detecto un nuevo objeto")
+                    # Añadir el nuevo string al vector si no existe
+                        
+                    if nuevo_string in objetos_detectados:
+                        print("El objeto ya se encuentra en la lista")
+                        # actualizar el valor de porcentaje de cercania y cordenadas
+                        # buscar el indice del objeto en el vector
+                        indice = objetos_detectados.index(nuevo_string)
+                        # actualizar el valor de porcentaje de cercania
+                        porcentajed3[indice] = sds
+                        # actualizar el valor de cordenadas
+                        cordenados[indice] = nuevo_cordenado
+                        # actualizar el valor de objetos detectados
+                        #objetos_detectados[indice] = nuevo_string
+                        #print(objetos_detectados)
+
+
+                    if determinalo % 100 == 0:
+                        ref.update({'objetos detectados': objetos_detectados})
+                        ref.update({'cordenados': cordenados})
+                        ref.update({'porcentaje_de_cercania': porcentajed3})
+
+                    # firebase data
+
+                    #guardamos los datos de names sds y lo que tenga la s 
+
+
+     #           else :
+      #              if guardo[0][0] < 320:
+##                       s += f"camine hacia la izquierda: "
+  #                  if guardo[0][0] > 320:
+   #                     s += f"camine hacia la derecha: "
+    #                else:
+     #                   print(guardo[0][0])
+      #                  s += f"da vueltas como imbezil: " 
 
                     if save_csv:
                         write_to_csv(p.name, label, confidence_str)
@@ -196,6 +290,7 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+                
 
             # Stream results
             im0 = annotator.result()
@@ -226,8 +321,37 @@ def run(
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
+                            
+            # Coordenadas del centro de la pantalla
+            x_centro = 320
+            x_objetivo = center_point[0]
+            rango_error = 40
+
+            if names[int(c)] == "person":
+                if 1 < sds < 80:
+                    # Determinar la dirección en la que el carro debe moverse
+                    if x_centro - rango_error <= x_objetivo <= x_centro + rango_error:
+                        s += f"camine hacia adelante "
+                    elif x_objetivo > x_centro + rango_error:
+                        s += f"camine hacia la derecha: "
+                    elif x_objetivo < x_centro - rango_error:
+                        s += f"camine hacia la izquierda: "
+                    else:
+                        s += f"da vueltas como imbezil: "
+                elif sds > 80:
+                    s += f"detente: "
+                else:
+                    s += f"da vueltas como imbezil: "
+                #prueba
+                # Determinar la dirección en la que el carro debe moverse
+
+
+
+                            
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'' if len(det) else '(no detections), Empieza a dar vueltas como imbezil,  '}{dt[1].dt * 1E3:.1f}ms")
+
+        
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
