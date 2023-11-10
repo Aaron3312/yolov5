@@ -37,6 +37,8 @@ from pathlib import Path
 from tkinter import *
 import socket
 import datetime
+import time
+
 
 
 
@@ -77,6 +79,8 @@ def areaYporcentaje(sd):
     porcentaje = int(porcentaje)
     return porcentaje
 
+
+
 def run(
         weights=ROOT / 'yolov5s.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
@@ -84,7 +88,7 @@ def run(
         imgsz=(640, 640),  # inference size (height, width)
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
-        max_det=1000,  # maximum detections per image
+        max_det=3,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         view_img=False,  # show results
         save_txt=False,  # save results to *.txt
@@ -107,6 +111,67 @@ def run(
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
 ):
+
+
+
+
+
+    
+    #cosas del movimiento de carrito
+    ESP_IP = "192.168.13.36"
+    ESP_PORT = 8266
+    
+    mov = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def vuelta_a_lo_imbezil(d11):
+        if d11 == [0]:
+            for i in range(0, 5):
+                print("d")
+                mov.send('d'.encode())
+            for i in range(0,5):
+                print("q")
+                mov.send('q'.encode())
+                
+
+            d11 = [1]
+        return d11
+
+    def movimiento_derecha(d11):
+        if d11 == [0]:
+            for i in range(0, 10):
+                mov.send('d'.encode())
+            for i in range(0,10):
+                mov.send('q'.encode())
+  
+
+            d11 = [1]
+
+        return d11
+
+    def movimiento_izquierda(a11):
+        if a11 == 0:
+            for i in range(0, 10):
+                mov.send('a'.encode())
+            for i in range(0,10):
+                mov.send('q'.encode())
+            a11 = 1
+        return a11
+    def movimiento_adelante(w11):
+        if w11 == 0:
+            for i in range(0, 10):
+                mov.send('s'.encode())
+            
+            w11 = 1
+        return 
+    def movimiento_stop(q11):
+        if q11 == 0:
+            mov.send('q'.encode())
+
+            q11 = 1
+        return q11
+
+    #finaliza cosas del movimiento de carrito
+
     # Initialize Firebase
     cred = credentials.Certificate("credentials.json")
     firebase_admin.initialize_app(cred, {"databaseURL": "https://iot-robotarm-default-rtdb.firebaseio.com/"})
@@ -164,12 +229,13 @@ def run(
     cordenados = []
     tiempod = []
     po = 0
+    c= 0
 
 
     if is_url and is_file:
         source = check_file(source)  # download
 
-    
+    center_point = round((10+20)/2), round((10+20)/2)
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
@@ -180,6 +246,17 @@ def run(
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
     determinalo = 0
+    a11 = 0
+    d11 = [0]
+    w11 = 0
+    q11 = 0
+
+    #cosas pa mandarle al otro wn
+    
+    mov = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mov.connect((ESP_IP, ESP_PORT))
+
+
 
     # Dataloader
     bs = 1  # batch_size
@@ -274,7 +351,7 @@ def run(
                     confidence = float(conf)
                     confidence_str = f'{confidence:.2f}'
                     sd = (int (xyxy[0]),int(xyxy[1]),int(xyxy[2]),(int(xyxy[3])))
-                    sds = areaYporcentaje(sd)
+                    sds = areaYporcentaje(sd) 
                     s += f"{n} {names[int(c)]} {sds} %{'s' * (n > 1)}, "  # add to 
                     #objetos detectados unicamente tiene que tener los objetos detectados en todo el video
                     nuevo_string = names[int(c)]
@@ -313,11 +390,47 @@ def run(
 
 
 
-                    if determinalo % 100 == 0:
+                    if determinalo % 1000000 == 0:
                         ref.update({'objetos detectados': objetos_detectados})
                         ref.update({'cordenados': cordenados})
                         ref.update({'porcentaje_de_cercania': porcentajed3})
                         ref.update({'tiempo': tiempod})
+ # Coordenadas del centro de la pantalla
+                x_centro = 320
+                x_objetivo = center_point[0]
+                rango_error = 40
+
+                if names[int(c)] == "person":
+
+                    if 1 < sds < 80:
+                        # Determinar la dirección en la que el carro debe moverse
+                        if x_centro - rango_error <= x_objetivo <= x_centro + rango_error:
+                        #if rango_error == 40:
+                            print("camine hacia adelante")
+                            s += f"camine hacia adelante "
+                            movimiento_adelante(w11)
+
+                        
+                        elif x_objetivo > x_centro + rango_error:
+                            s += f"camine hacia la derecha: "
+                            movimiento_derecha(d11)
+                        elif x_objetivo < x_centro - rango_error:
+                            s += f"camine hacia la izquierda: "
+                            movimiento_izquierda(a11)
+                        
+                        else:
+                            s += f"da vueltas como imbezil: "
+                            vuelta_a_lo_imbezil(d11)
+                        
+                    elif sds > 80:
+                        s += f"detente: "
+                        movimiento_stop(q11)
+
+                else:
+                    s += f"da vueltas como imbezil: "
+                    vuelta_a_lo_imbezil(d11)
+                    #prueba
+                    # Determinar la dirección en la que el carro debe moverse
 
                     # firebase data
 
@@ -380,34 +493,14 @@ def run(
                     vid_writer[i].write(im0)
 
                             
-            # Coordenadas del centro de la pantalla
-            x_centro = 320
-            x_objetivo = center_point[0]
-            rango_error = 40
-
-            if names[int(c)] == "person":
-                if 1 < sds < 80:
-                    # Determinar la dirección en la que el carro debe moverse
-                    if x_centro - rango_error <= x_objetivo <= x_centro + rango_error:
-                        s += f"camine hacia adelante "
-                    elif x_objetivo > x_centro + rango_error:
-                        s += f"camine hacia la derecha: "
-                    elif x_objetivo < x_centro - rango_error:
-                        s += f"camine hacia la izquierda: "
-                    else:
-                        s += f"da vueltas como imbezil: "
-                elif sds > 80:
-                    s += f"detente: "
-                else:
-                    s += f"da vueltas como imbezil: "
-                #prueba
-                # Determinar la dirección en la que el carro debe moverse
+           
 
 
-
-                            
+        # lo domrmimos unos segundos
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), Empieza a dar vueltas como imbezil,  '}{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'' if len(det) else f'(no detections), Empieza a dar vueltas como imbezil,  {vuelta_a_lo_imbezil(d11)}' }{dt[1].dt * 1E3:.1f}ms")
+
+
 
         
 
