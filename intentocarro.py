@@ -2,10 +2,11 @@ from tkinter import *
 import socket
 
 
-ESP_IP = "192.168.168.20"
+ESP_IP = "192.168.78.36"
 
 
 ESP_PORT = 8266
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
