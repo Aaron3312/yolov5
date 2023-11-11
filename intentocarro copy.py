@@ -11,7 +11,8 @@ import cv2
 from PIL import Image, ImageTk
 
 
-ESP_IP = "192.168.13.36"
+#ESP_IP = "192.168.13.36"
+ESP_IP = "192.168.202.36"
 ESP_PORT = 8266
 ## 
 

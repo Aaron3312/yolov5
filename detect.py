@@ -118,7 +118,7 @@ def run(
 
     
     #cosas del movimiento de carrito
-    ESP_IP = "192.168.13.36"
+    ESP_IP = "192.168.202.36"
     ESP_PORT = 8266
     
     mov = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -126,10 +126,8 @@ def run(
     def vuelta_a_lo_imbezil(d11):
         if d11 == [0]:
             for i in range(0, 5):
-                print("d")
                 mov.send('d'.encode())
             for i in range(0,5):
-                print("q")
                 mov.send('q'.encode())
                 
 
@@ -390,7 +388,7 @@ def run(
 
 
 
-                    if determinalo % 1000000 == 0:
+                    if determinalo % 100 == 0:
                         ref.update({'objetos detectados': objetos_detectados})
                         ref.update({'cordenados': cordenados})
                         ref.update({'porcentaje_de_cercania': porcentajed3})
