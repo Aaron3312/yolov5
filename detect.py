@@ -38,6 +38,7 @@ from tkinter import *
 import socket
 import datetime
 import time
+from time import sleep
 
 
 
@@ -118,53 +119,44 @@ def run(
 
     
     #cosas del movimiento de carrito
-    ESP_IP = "192.168.202.36"
+    ESP_IP = "192.168.191.20"
     ESP_PORT = 8266
     
     mov = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def vuelta_a_lo_imbezil(d11):
+    def vueltas(d11):
         if d11 == [0]:
-            for i in range(0, 5):
-                mov.send('d'.encode())
-            for i in range(0,5):
-                mov.send('q'.encode())
-                
-
+            sleep(0.2)
+            mov.send('f'.encode())
+            
             d11 = [1]
         return d11
 
     def movimiento_derecha(d11):
         if d11 == [0]:
-            for i in range(0, 10):
-                mov.send('d'.encode())
-            for i in range(0,10):
-                mov.send('q'.encode())
-  
-
+            sleep(0.2)
+            mov.send('f'.encode())
+            
             d11 = [1]
 
         return d11
 
     def movimiento_izquierda(a11):
         if a11 == 0:
-            for i in range(0, 10):
-                mov.send('a'.encode())
-            for i in range(0,10):
-                mov.send('q'.encode())
+            sleep(0.2)
+            mov.send('g'.encode())
+            
             a11 = 1
         return a11
     def movimiento_adelante(w11):
         if w11 == 0:
             for i in range(0, 10):
-                mov.send('s'.encode())
-            
+                mov.send('w'.encode())         
             w11 = 1
         return 
     def movimiento_stop(q11):
         if q11 == 0:
             mov.send('q'.encode())
-
             q11 = 1
         return q11
 
@@ -174,7 +166,7 @@ def run(
     cred = credentials.Certificate("credentials.json")
     firebase_admin.initialize_app(cred, {"databaseURL": "https://iot-robotarm-default-rtdb.firebaseio.com/"})
     ref = db.reference('/IAROB')
-    ref.delete()
+    #ref.delete()
 
     print("Se eliminaron todos los documentos en la colección especificada.")
     # end firebase
@@ -418,7 +410,7 @@ def run(
                         
                         else:
                             s += f"da vueltas como imbezil: "
-                            vuelta_a_lo_imbezil(d11)
+                            vueltas(d11)
                         
                     elif sds > 80:
                         s += f"detente: "
@@ -426,7 +418,7 @@ def run(
 
                 else:
                     s += f"da vueltas como imbezil: "
-                    vuelta_a_lo_imbezil(d11)
+                    vueltas(d11)
                     #prueba
                     # Determinar la dirección en la que el carro debe moverse
 
@@ -496,7 +488,7 @@ def run(
 
         # lo domrmimos unos segundos
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else f'(no detections), Empieza a dar vueltas como imbezil,  {vuelta_a_lo_imbezil(d11)}' }{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'' if len(det) else f'(no detections), Empieza a dar vueltas como imbezil,  {vueltas(d11)}' }{dt[1].dt * 1E3:.1f}ms")
 
 
 

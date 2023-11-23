@@ -12,11 +12,12 @@ from PIL import Image, ImageTk
 
 
 #ESP_IP = "192.168.13.36"
-ESP_IP = "192.168.212.20"
+ESP_IP = "192.168.191.20"
 ESP_PORT = 8266
 ## 
 
-cap = cv2.VideoCapture('http://10.43.40.234:4747/video')  # Video URL
+cap = cv2.VideoCapture('http://10.43.38.8:4747/video')  # Video URL
+#cap = cv2.VideoCapture(0)  # Video URL
 
 
 
@@ -58,19 +59,35 @@ root.title("Control de Carro")
 frame = Frame(root)
 
 lbl_title = Label(frame, text="Control de Carro ROBOT")
-lbl_title.grid(row=0, column=0, pady=10, padx=10)
+lbl_title.grid(row=0, column=0, pady=0, padx=0)
+lbl_title.config(font=("Comic_sans", 13))
+lbl_title.config(bg="black", fg="white")
+lbl_title.config(width=20, height=2)
 
-button_up = Button(frame, text="Arriba", width=10, height=2, command=lambda: on_button_press("s"))
-button_down = Button(frame, text="Abajo", width=10, height=2, command=lambda: on_button_press("w"))
-button_left = Button(frame, text="Izquierda", width=10, height=2, command=lambda: on_button_press("a"))
-button_right = Button(frame, text="Derecha", width=10, height=2, command=lambda: on_button_press("d"))
-button_stop = Button(frame, text="stop", width=10, height=2, command=lambda: on_button_press("q"))
 
+
+
+
+button_up = Button(frame, text="Arriba W", width=10, height=2, command=lambda: on_button_press("w"))
+button_down = Button(frame, text="Abajo S", width=10, height=2, command=lambda: on_button_press("s"))
+button_left = Button(frame, text="Izquierda A", width=10, height=2, command=lambda: on_button_press("a"))
+button_right = Button(frame, text="Derecha D", width=10, height=2, command=lambda: on_button_press("d"))
+button_stop = Button(frame, text="stop Q", width=10, height=2, command=lambda: on_button_press("q"))
+button_despacito = Button(frame, text="pasitos_atras E", width=10, height=2, command=lambda: on_button_press("e"))
+button_despacito_atras = Button(frame, text="pasitos_adelante - X", width=15, height=2, command=lambda: on_button_press("x"))
+button_despacito_drch = Button(frame, text="pasitos_derecha - f", width=15, height=2, command=lambda: on_button_press("f"))
+button_despacito_izq = Button(frame, text="pasitos_izquierda - g", width=15, height=2, command=lambda: on_button_press("g"))
+
+
+button_despacito_atras.grid(row=1, column=0, pady=10)
+button_despacito.grid(row=1, column=2, pady=10)
 button_up.grid(row=1, column=1, pady=10)
 button_down.grid(row=3, column=1, pady=10)
 button_left.grid(row=2, column=0, padx=10)
 button_right.grid(row=2, column=2, padx=10)
 button_stop.grid(row=2, column=1, pady=10)
+button_despacito_drch.grid(row=3, column=0, pady=10)
+button_despacito_izq.grid(row=3, column=2, pady=10)
 
 root.bind("<ButtonRelease-1>", on_button_release)
 
