@@ -100,7 +100,7 @@ def run(
     retina_masks=True, # use retina masks for higher accuracy
 ):
     #source = 'http://192.168.100.114:4747/video'
-    source = '0'
+    source = 'http://10.43.40.234:4747/video'
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
