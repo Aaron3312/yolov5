@@ -22,6 +22,10 @@
 #define TRIGGER_PIN_2  22  // Pin de trigger del segundo sensor ultrasónico
 #define ECHO_PIN_2     23  // Pin de echo del segundo sensor ultrasónico
 
+#define LedPin_1  13 
+#define LedPin_2  12
+
+
 enum Comandos { CMD_FORWARD = 's', CMD_BACKWARD ='w', CMD_RIGHT ='d', CMD_LEFT = 'a', CMD_STOP = 'q', CMD_DESPACIO = 'e' , CMD_DESPACIOA = 'x', CMD_DESPACIODrch = 'f', CMD_DESPACIOizq = 'g'};
 
 //
@@ -541,16 +545,22 @@ void byteReceived(byte byteReceived) {
 
 void setup() {
     setUpPinModes();
-
+  // Configuración de los pines de los motores
   pinMode(PIN_MOTOR_R_FWD, OUTPUT);
   pinMode(PIN_MOTOR_R_BWD, OUTPUT);
   pinMode(PIN_MOTOR_L_FWD, OUTPUT);
   pinMode(PIN_MOTOR_L_BWD, OUTPUT);
 
-  
-  pinMode(TRIGGER_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
+  // Configuración del sensor de proximidad
+  pinMode(TRIGGER_PIN_1, OUTPUT);
+  pinMode(ECHO_PIN_1, INPUT);
+  pinMode(TRIGGER_PIN_2, OUTPUT);
+  pinMode(ECHO_PIN_2, INPUT);
+  // Configuración de los leds
+  pinMode(LedPin_1, OUTPUT);
+  pinMode(LedPin_2, OUTPUT);
 
+  // Inicialización de los pines de los motores
   digitalWrite(PIN_MOTOR_R_FWD, LOW);
   digitalWrite(PIN_MOTOR_R_BWD, LOW);
   digitalWrite(PIN_MOTOR_L_FWD, LOW);
@@ -583,11 +593,50 @@ void setup() {
   Serial.println("HTTP server started");
 
  TCPServer.begin();
-      
+
 
 }
 
 void loop() {
+  // Detección de proximidad
+  long duration_1, distance_1;
+  long duration_2, distance_2;
+  // Medir la distancia del primer sensor
+  digitalWrite(TRIGGER_PIN_1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIGGER_PIN_1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGGER_PIN_1, LOW);
+  duration_1 = pulseIn(ECHO_PIN_1, HIGH);
+  distance_1 = duration_1 * 0.034 / 2;
+
+  // Medir la distancia del segundo sensor
+  digitalWrite(TRIGGER_PIN_2, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIGGER_PIN_2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGGER_PIN_2, LOW);
+  duration_2 = pulseIn(ECHO_PIN_2, HIGH);
+  distance_2 = duration_2 * 0.034 / 2;
+
+  if(distance_1 < 20){
+    digitalWrite(LedPin_1, HIGH);
+    //deten el carro
+    byteReceived(CMD_STOP);
+  }
+
+  else{
+    digitalWrite(LedPin_1,LOW);
+  }
+
+  if(distance_2 < 20){
+    digitalWrite(LedPin_2, HIGH);
+    //deten el carro
+    byteReceived(CMD_STOP);
+  }
+  else{
+    digitalWrite(LedPin_2, LOW);
+  }
 
    /*if (Serial.available() > 0)
        byteReceived(Serial.read());*/
