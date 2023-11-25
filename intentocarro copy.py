@@ -12,12 +12,13 @@ from PIL import Image, ImageTk
 
 
 #ESP_IP = "192.168.13.36"
-ESP_IP = "192.168.191.20"
+ESP_IP = "192.168.95.20"
+
 ESP_PORT = 8266
 ## 
 
-cap = cv2.VideoCapture('http://10.43.38.8:4747/video')  # Video URL
-#cap = cv2.VideoCapture(0)  # Video URL
+#cap = cv2.VideoCapture('http://10.43.38.8:4747/video')  # Video URL
+cap = cv2.VideoCapture(0)  # Video URL
 
 
 

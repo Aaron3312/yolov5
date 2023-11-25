@@ -418,18 +418,6 @@ void setUpPinModes()
 }
 
 
-// Función para manejar la detección del sensor de proximidad
-bool detectar_obstaculo() {
-    long duration, distance;
-    digitalWrite(TRIGGER_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIGGER_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIGGER_PIN, LOW);
-    duration = pulseIn(ECHO_PIN, HIGH);
-    distance = (duration / 2) / 29.1;
-    return distance < 10; // Ajusta el valor de distancia según tus necesidades
-}
 
 void byteReceived(byte byteReceived) {    
     

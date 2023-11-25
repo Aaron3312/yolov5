@@ -15,18 +15,8 @@
 #define PIN_MOTOR_L_FWD 19
 #define PIN_MOTOR_L_BWD 21      
 
-// Definiciones de pines para el sensor de proximidad ultrasónico
-#define TRIGGER_PIN_1  4  // Pin de trigger del primer sensor ultrasónico
-#define ECHO_PIN_1     2  // Pin de echo del primer sensor ultrasónico
 
-#define TRIGGER_PIN_2  22  // Pin de trigger del segundo sensor ultrasónico
-#define ECHO_PIN_2     23  // Pin de echo del segundo sensor ultrasónico
-
-#define LedPin_1  13 
-#define LedPin_2  12
-
-
-enum Comandos { CMD_FORWARD = 's', CMD_BACKWARD ='w', CMD_RIGHT ='d', CMD_LEFT = 'a', CMD_STOP = 'q', CMD_DESPACIO = 'e' , CMD_DESPACIOA = 'x', CMD_DESPACIODrch = 'f', CMD_DESPACIOizq = 'g'};
+enum Comandos { CMD_FORWARD = 's', CMD_BACKWARD ='w', CMD_RIGHT ='d', CMD_LEFT = 'a', CMD_STOP = 'q', CMD_DESPACIO = 'e' , CMD_DESPACIOA = 'x', CMD_DESPACIODrch = 'f', CMD_DESPACIOizq = 'g', CMD_Ignora = 'l', CMD_NoIgnora = 'k'};
 
 //
 struct ServoPins
@@ -418,23 +408,13 @@ void setUpPinModes()
 }
 
 
-// Función para manejar la detección del sensor de proximidad
-bool detectar_obstaculo() {
-    long duration, distance;
-    digitalWrite(TRIGGER_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIGGER_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIGGER_PIN, LOW);
-    duration = pulseIn(ECHO_PIN, HIGH);
-    distance = (duration / 2) / 29.1;
-    return distance < 10; // Ajusta el valor de distancia según tus necesidades
-}
 
 void byteReceived(byte byteReceived) {    
     
 
     switch(byteReceived){
+
+
       case CMD_DESPACIOizq:
         digitalWrite(PIN_MOTOR_R_FWD, HIGH);
         digitalWrite(PIN_MOTOR_R_BWD, LOW);
@@ -542,20 +522,18 @@ void setup() {
   pinMode(PIN_MOTOR_L_FWD, OUTPUT);
   pinMode(PIN_MOTOR_L_BWD, OUTPUT);
 
-  // Configuración del sensor de proximidad
-  pinMode(TRIGGER_PIN_1, OUTPUT);
-  pinMode(ECHO_PIN_1, INPUT);
-  pinMode(TRIGGER_PIN_2, OUTPUT);
-  pinMode(ECHO_PIN_2, INPUT);
-  // Configuración de los leds
-  pinMode(LedPin_1, OUTPUT);
-  pinMode(LedPin_2, OUTPUT);
 
   // Inicialización de los pines de los motores
   digitalWrite(PIN_MOTOR_R_FWD, LOW);
   digitalWrite(PIN_MOTOR_R_BWD, LOW);
   digitalWrite(PIN_MOTOR_L_FWD, LOW);
   digitalWrite(PIN_MOTOR_L_BWD, LOW);
+  
+  //inicializamos un el puerto digital 2 y el 4 para detener el carro si es high
+  pinMode(2, INPUT);
+  pinMode(4, INPUT);
+  pinMode(13, INPUT);
+
   
   Serial.begin(115200);
 
@@ -585,50 +563,33 @@ void setup() {
 
  TCPServer.begin();
 
-
 }
 
 void loop() {
-  // Detección de proximidad
-  long duration_1, distance_1;
-  long duration_2, distance_2;
-  // Medir la distancia del primer sensor
-  digitalWrite(TRIGGER_PIN_1, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIGGER_PIN_1, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIGGER_PIN_1, LOW);
-  duration_1 = pulseIn(ECHO_PIN_1, HIGH);
-  distance_1 = duration_1 * 0.034 / 2;
+    
+    // Detección de proximidad con el sensor ultrasónico unicamente recibe valor de 1 sensores high o low
+    if (digitalRead(13) == LOW)
+    {
+    if(digitalRead(2) == HIGH){
+      byteReceived(CMD_STOP);
+      byteReceived(CMD_DESPACIODrch);
+    }
+    if(digitalRead(4) == HIGH){
+      byteReceived(CMD_STOP);
+      byteReceived(CMD_DESPACIOizq);
+    }
+    }
+    else{
+      byteReceived(CMD_STOP);
+      //madamos el carro pa atra
+      byteReceived(CMD_FORWARD);
+    }
 
-  // Medir la distancia del segundo sensor
-  digitalWrite(TRIGGER_PIN_2, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIGGER_PIN_2, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIGGER_PIN_2, LOW);
-  duration_2 = pulseIn(ECHO_PIN_2, HIGH);
-  distance_2 = duration_2 * 0.034 / 2;
 
-  if(distance_1 < 20){
-    digitalWrite(LedPin_1, HIGH);
-    //deten el carro
-    byteReceived(CMD_STOP);
-  }
 
-  else{
-    digitalWrite(LedPin_1,LOW);
-  }
-
-  if(distance_2 < 20){
-    digitalWrite(LedPin_2, HIGH);
-    //deten el carro
-    byteReceived(CMD_STOP);
-  }
-  else{
-    digitalWrite(LedPin_2, LOW);
-  }
-
+    
+    
+  
    /*if (Serial.available() > 0)
        byteReceived(Serial.read());*/
 
