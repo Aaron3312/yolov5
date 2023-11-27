@@ -623,3 +623,22 @@ void loop() {
   }
 
 }
+
+
+//esto pal html
+/*<script>
+var ws = new WebSocket('ws://' + location.hostname + '/RobotArmInput');
+ws.onmessage = function(event) {
+  var logElement = document.getElementById('log');
+  logElement.textContent += event.data + '\n';
+};
+</script>
+<pre id="log"></pre>
+*/
+
+//esto pal codigo
+/*void printToSerialAndWebSocket(const String& data) {
+  Serial.print(data);
+  wsRobotArmInput.textAll(data);
+}*/
+
