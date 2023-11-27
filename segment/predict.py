@@ -100,7 +100,8 @@ def run(
     retina_masks=True, # use retina masks for higher accuracy
 ):
     #source = 'http://192.168.100.114:4747/video'
-    source = 'http://10.43.40.234:4747/video'
+    #source = 'http://10.43.40.234:4747/video'
+    source = '0'
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
@@ -272,7 +273,18 @@ def run(
                     255 if retina_masks else im[i])
                 dsf = 0
                 # Write results
+#-----------------------------------------IMPORTANT----------------------------------------------------
+
+
+
+
+
+                #for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
+                    # Write results
                 for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
+                    # Solo procesar si la clase es "persona" o "botella"
+                    if int(cls) in [0, 39]:  # Cambia estos números a los índices correctos para "persona" y "botella"
+                    # Resto de tu código aquí...
                     #how can i print the cordinates of the boxes or his area? 
                     # Cálculo del área para cada cuadro delimitador
                     #dsf = dsf + 1
@@ -281,21 +293,21 @@ def run(
                     #    dsf = dsf - 1
                     
 
-                    if save_txt:  # Write to file
-                        seg = segments[j].reshape(-1)  # (n,2) to (n*2)
-                        line = (cls, *seg, conf) if save_conf else (cls, *seg)  # label format
-                        
-                        with open(f'{txt_path}.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
-                        
+                        if save_txt:  # Write to file
+                            seg = segments[j].reshape(-1)  # (n,2) to (n*2)
+                            line = (cls, *seg, conf) if save_conf else (cls, *seg)  # label format
+                            
+                            with open(f'{txt_path}.txt', 'a') as f:
+                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                            
 
-                    if save_img or save_crop or view_img:  # Add bbox to image
-                        c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True) )
-                        # annotator.draw.polygon(segments[j], outline=colors(c, True), width=3)
-                    if save_crop:
-                        save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+                        if save_img or save_crop or view_img:  # Add bbox to image
+                            c = int(cls)  # integer class
+                            label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                            annotator.box_label(xyxy, label, color=colors(c, True) )
+                            # annotator.draw.polygon(segments[j], outline=colors(c, True), width=3)
+                        if save_crop:
+                            save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
             # Stream results
             im0 = annotator.result()

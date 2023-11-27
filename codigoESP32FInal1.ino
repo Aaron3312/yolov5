@@ -15,10 +15,10 @@
 #define PIN_MOTOR_L_FWD 19
 #define PIN_MOTOR_L_BWD 21      
 
-
+// Definiciones de comandos para el carro
 enum Comandos { CMD_FORWARD = 's', CMD_BACKWARD ='w', CMD_RIGHT ='d', CMD_LEFT = 'a', CMD_STOP = 'q', CMD_DESPACIO = 'e' , CMD_DESPACIOA = 'x', CMD_DESPACIODrch = 'f', CMD_DESPACIOizq = 'g', CMD_Ignora = 'l', CMD_NoIgnora = 'k'};
 
-//
+// Definiciones de comandos para el brazo robótico
 struct ServoPins
 {
   Servo servo;
@@ -27,6 +27,7 @@ struct ServoPins
   int initialPosition;  
 };
 
+// Definiciones de comandos para el brazo robótico
 std::vector<ServoPins> servoPins = 
 {
   { Servo(), 15 , "Base", 90},
@@ -36,30 +37,35 @@ std::vector<ServoPins> servoPins =
 };
 
 
-
+// Definiciones de comandos para guardar los pasos para el brazo robótico
 struct RecordedStep
 {
   int servoIndex;
   int value;
   int delayInStep;
 };
+// Definiciones de comandos para guardar los pasos para el brazo robótico
 std::vector<RecordedStep> recordedSteps;
 
-
+//los valores de guardar los pasos y reproducirlos
 bool recordSteps = false;
 bool playRecordedSteps = false;
 
+//para guardar el tiempo en milisegundos
 unsigned long previousTimeInMilli = millis();
 
 //Configuración de red
 const char* ssid     = "***REMOVED***";
 const char* password = "***REMOVED***";
 
+//Configuración de red TCP para el carro
 WiFiServer TCPServer(8266); //Servidor del ESP32
 WiFiClient TCPClient; //Cliente TCP (PC)
 
+//Configuración de red TCP para el brazo robótico
 AsyncWebServer server(80);
 AsyncWebSocket wsRobotArmInput("/RobotArmInput");
+//pagina web html para el brazo robotico y el carro con el joystick?
 const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
 <!DOCTYPE html>
 <html>
@@ -252,16 +258,18 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
 </html>
 )HTMLHOMEPAGE";
 
+//esto es para cosas del html y hace 
 void handleRoot(AsyncWebServerRequest *request) 
 {
   request->send_P(200, "text/html", htmlHomePage);
 }
-
+//
 void handleNotFound(AsyncWebServerRequest *request) 
 {
     request->send(404, "text/plain", "File Not Found");
 }
 
+//esto es para el brazo robotico en la pagina web
 void onRobotArmInputWebSocketEvent(AsyncWebSocket *server, 
                       AsyncWebSocketClient *client, 
                       AwsEventType type,
@@ -332,7 +340,7 @@ void onRobotArmInputWebSocketEvent(AsyncWebSocket *server,
   }
 }
 
-
+//esto actualiza el estado del brazo robotico en la pagina web 
 void sendCurrentRobotArmState()
 {
   for (int i = 0; i < servoPins.size(); i++)
@@ -343,9 +351,10 @@ void sendCurrentRobotArmState()
   wsRobotArmInput.textAll(String("Play,") + (playRecordedSteps ? "ON" : "OFF"));  
 }
 
+//esto es para hacer que el brazo robotico se mueva, escribe los valores de los servos.
 void writeServoValues(int servoIndex, int value)
 {
-  if (recordSteps)
+  if (recordSteps) //en caso de que se este grabando los pasos del brazo robotico se guardan los valores de los servos
   {
     RecordedStep recordedStep;       
     if (recordedSteps.size() == 0) // We will first record initial position of all servos. 
@@ -368,6 +377,7 @@ void writeServoValues(int servoIndex, int value)
   servoPins[servoIndex].servo.write(value);   
 }
 
+//esto es para reproducir los pasos del brazo robotico. 
 void playRecordedRobotArmSteps()
 {
   if (recordedSteps.size() == 0)
@@ -397,7 +407,7 @@ void playRecordedRobotArmSteps()
   }
 }
 
-
+//esto es para algo de los servos, no estoy seguro de que hace pero es necesario para que funcione el brazo robotico
 void setUpPinModes()
 {
   for (int i = 0; i < servoPins.size(); i++)
@@ -408,13 +418,13 @@ void setUpPinModes()
 }
 
 
-
+//esto es para el carro, recibe un byte y dependiendo del byte hace algo diferente, como moverse o detenerse, etc.
 void byteReceived(byte byteReceived) {    
     
 
     switch(byteReceived){
 
-
+      //para que el carro se mueva despacio a la izquierda
       case CMD_DESPACIOizq:
         digitalWrite(PIN_MOTOR_R_FWD, HIGH);
         digitalWrite(PIN_MOTOR_R_BWD, LOW);
@@ -427,6 +437,7 @@ void byteReceived(byte byteReceived) {
         digitalWrite(PIN_MOTOR_L_BWD, LOW);
         delay(100);
       break;
+      //para que el carro se mueva despacio a la derecha
       case CMD_DESPACIODrch:
         digitalWrite(PIN_MOTOR_R_FWD, LOW);
         digitalWrite(PIN_MOTOR_R_BWD, HIGH);
@@ -439,7 +450,7 @@ void byteReceived(byte byteReceived) {
         digitalWrite(PIN_MOTOR_L_BWD, LOW);
         delay(100);
       break;
-
+      //para que el carro se mueva despacio hacia atras
       case CMD_DESPACIOA:
         digitalWrite(PIN_MOTOR_R_FWD, LOW);
         digitalWrite(PIN_MOTOR_R_BWD, HIGH);
@@ -451,7 +462,7 @@ void byteReceived(byte byteReceived) {
         digitalWrite(PIN_MOTOR_L_FWD, LOW);
         digitalWrite(PIN_MOTOR_L_BWD, LOW);
       break;
-
+      //para que el carro se mueva despacio hacia adelante
       case CMD_DESPACIO:
         digitalWrite(PIN_MOTOR_R_FWD, HIGH);
         digitalWrite(PIN_MOTOR_R_BWD, LOW);
@@ -464,56 +475,51 @@ void byteReceived(byte byteReceived) {
         digitalWrite(PIN_MOTOR_L_BWD, LOW);
       break;
 
+      //para que el carro se mueva hacia adelante
       case CMD_FORWARD:
        digitalWrite(PIN_MOTOR_R_FWD, HIGH);
        digitalWrite(PIN_MOTOR_R_BWD, LOW);
        digitalWrite(PIN_MOTOR_L_FWD, HIGH);
        digitalWrite(PIN_MOTOR_L_BWD, LOW);
-
       break;
 
+      //para que el carro se mueva hacia atras
       case CMD_BACKWARD:
-
        digitalWrite(PIN_MOTOR_R_FWD, LOW);
        digitalWrite(PIN_MOTOR_R_BWD, HIGH);
        digitalWrite(PIN_MOTOR_L_FWD, LOW);
        digitalWrite(PIN_MOTOR_L_BWD, HIGH);
-      
       break;
 
+      //para que el carro se mueva a la derecha
       case CMD_RIGHT:
-
        digitalWrite(PIN_MOTOR_R_FWD, LOW);
        digitalWrite(PIN_MOTOR_R_BWD, HIGH);
        digitalWrite(PIN_MOTOR_L_FWD, HIGH);
        digitalWrite(PIN_MOTOR_L_BWD, LOW);
-
       break;
 
-
+      //para que el carro se mueva a la izquierda
       case CMD_LEFT:
        digitalWrite(PIN_MOTOR_R_FWD, HIGH);
        digitalWrite(PIN_MOTOR_R_BWD, LOW);
        digitalWrite(PIN_MOTOR_L_FWD, LOW);
        digitalWrite(PIN_MOTOR_L_BWD, HIGH);
-
       break;
-      case CMD_STOP:
 
-      
-        digitalWrite(PIN_MOTOR_R_FWD, LOW);
+      //para que el carro se detenga
+      case CMD_STOP:
+        digitalWrite(PIN_MOTOR_R_FWD, LOW); 
         digitalWrite(PIN_MOTOR_R_BWD, LOW);
         digitalWrite(PIN_MOTOR_L_FWD, LOW);
         digitalWrite(PIN_MOTOR_L_BWD, LOW);
-
       break;
 
       default: break;
-            
     }
-  
 }
 
+//esto es el setup para el proyecto, se inicializan los pines y se conecta a la red wifi, al final se inicia el servidor
 void setup() {
     setUpPinModes();
   // Configuración de los pines de los motores
@@ -521,7 +527,6 @@ void setup() {
   pinMode(PIN_MOTOR_R_BWD, OUTPUT);
   pinMode(PIN_MOTOR_L_FWD, OUTPUT);
   pinMode(PIN_MOTOR_L_BWD, OUTPUT);
-
 
   // Inicialización de los pines de los motores
   digitalWrite(PIN_MOTOR_R_FWD, LOW);
@@ -549,9 +554,9 @@ void setup() {
   
   Serial.print("Conectado.  ");
   Serial.print(" Dirección IP del módulo: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.localIP()); //esto deberiamos sacarlo al html o a un display
 
-
+  // Configuración del servidor web
   server.on("/", HTTP_GET, handleRoot);
   server.onNotFound(handleNotFound);
       
@@ -565,21 +570,22 @@ void setup() {
 
 }
 
+//este es el loop del proyecto, se ejecuta constantemente, se encarga de recibir los bytes y ejecutar las funciones correspondientes
 void loop() {
     
-    // Detección de proximidad con el sensor ultrasónico unicamente recibe valor de 1 sensores high o low
-    if (digitalRead(13) == LOW)
+    // Detección de proximidad con el sensor ultrasónico unicamente recibe valor de 2 sensores, en high o low
+    if (digitalRead(13) == LOW) //si los 2 sensores no estan activos el carro se mueve normal
     {
-    if(digitalRead(2) == HIGH){
+    if(digitalRead(2) == HIGH){ //si el sensor de la izquierda esta activo el carro se mueve a la derecha
       byteReceived(CMD_STOP);
       byteReceived(CMD_DESPACIODrch);
     }
-    if(digitalRead(4) == HIGH){
+    if(digitalRead(4) == HIGH){ //si el sensor de la derecha esta activo el carro se mueve a la izquierda
       byteReceived(CMD_STOP);
       byteReceived(CMD_DESPACIOizq);
     }
     }
-    else{
+    else{ //si los 2 sensores estan activos el carro se detiene y se mueve hacia atras
       byteReceived(CMD_STOP);
       //madamos el carro pa atra
       byteReceived(CMD_FORWARD);
@@ -592,7 +598,7 @@ void loop() {
   
    /*if (Serial.available() > 0)
        byteReceived(Serial.read());*/
-
+    
     if (!TCPClient.connected()) {
         // try to connect to a new client
         TCPClient = TCPServer.available();
