@@ -25,6 +25,7 @@ std::vector<MOTOR_PINS> motorPins =
   {2, 12, 13}, //RIGHT_MOTOR Pins (EnA, IN1, IN2)
   {2, 1, 3},  //LEFT_MOTOR  Pins (EnB, IN3, IN4)
 };
+
 #define LIGHT_PIN 4
 
 #define UP 1
@@ -258,6 +259,7 @@ void rotateMotor(int motorNumber, int motorDirection)
     digitalWrite(motorPins[motorNumber].pinIN1, HIGH);
     digitalWrite(motorPins[motorNumber].pinIN2, LOW);    
   }
+  
   else if (motorDirection == BACKWARD)
   {
     digitalWrite(motorPins[motorNumber].pinIN1, LOW);

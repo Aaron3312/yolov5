@@ -13,7 +13,25 @@
 #define PIN_MOTOR_R_FWD 5
 #define PIN_MOTOR_R_BWD 18
 #define PIN_MOTOR_L_FWD 19
-#define PIN_MOTOR_L_BWD 21      
+#define PIN_MOTOR_L_BWD 21
+
+//newcode
+#define UP 1
+#define DOWN 2
+#define LEFT 3
+#define RIGHT 4
+#define STOP 0
+
+#define RIGHT_MOTOR 0
+#define LEFT_MOTOR 1
+
+#define FORWARD 1
+#define BACKWARD -1
+
+const int PWMSpeedChannel = 2;
+const int PWMFreq = 1000; /* 1 KHz */
+
+
 
 // Definiciones de comandos para el carro
 enum Comandos { CMD_FORWARD = 's', CMD_BACKWARD ='w', CMD_RIGHT ='d', CMD_LEFT = 'a', CMD_STOP = 'q', CMD_DESPACIO = 'e' , CMD_DESPACIOA = 'x', CMD_DESPACIODrch = 'f', CMD_DESPACIOizq = 'g', CMD_Ignora = 'l', CMD_NoIgnora = 'k'};

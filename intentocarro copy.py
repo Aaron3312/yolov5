@@ -12,8 +12,7 @@ from PIL import Image, ImageTk
 
 
 #ESP_IP = "192.168.13.36"
-ESP_IP = "192.168.95.20"
-
+ESP_IP = "192.168.17.20"
 ESP_PORT = 8266
 ## 
 
