@@ -119,7 +119,7 @@ def run(
 
     
     #cosas del movimiento de carrito
-    ESP_IP = "192.168.95.20"
+    ESP_IP = "192.168.17.20"
     ESP_PORT = 8266
     
     mov = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

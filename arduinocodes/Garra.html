@@ -1,0 +1,262 @@
+const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+
+    input[type=button]
+    {
+      background-color:red;color:white;border-radius:30px;width:100%;height:40px;font-size:20px;text-align:center;
+    }
+    .arrows {
+      font-size:30px;
+      color:greenyellow;
+    }
+
+    td.button {
+      background-color:blue;
+      border-radius:25%;
+      box-shadow: 5px 5px #888888;
+    }
+
+    td.button:active {
+      transform: translate(5px,5px);
+      box-shadow: none; 
+    }
+
+
+        
+    .noselect {
+      -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none; /* Safari */
+         -khtml-user-select: none; /* Konqueror HTML */
+           -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; /* Non-prefixed version, currently
+                                      supported by Chrome and Opera */
+    }
+
+    .slidecontainer {
+      width: 100%;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 20px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+  
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: red;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: red;
+      cursor: pointer;
+    }
+
+    </style>
+  
+  </head>
+  <body class="noselect" align="center" style="background-color:white">
+     
+    <h1 style="color: rebeccapurple;text-align:center;">Proyecto Carro-Brazo by Aaron Hernandez</h1>
+    <h2 style="color: rebeccapurple;text-align:center;">IOT Car and arm Controls</h2>
+    
+    <table id="mainTable" style="width:400px;margin:auto;table-layout:fixed" CELLSPACING=10>
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Garra:</b></td>
+        <td colspan=2>
+         <div class="slidecontainer">
+            <input type="range" min="0" max="180" value="90" class="slider" id="Gripper" oninput='sendButtonInput("Gripper",value)'>
+          </div>
+        </td>
+      </tr> 
+      <tr/><tr/>
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Codo:</b></td>
+        <td colspan=2>
+         <div class="slidecontainer">
+            <input type="range" min="0" max="180" value="90" class="slider" id="Elbow" oninput='sendButtonInput("Elbow",value)'>
+          </div>
+        </td>
+      </tr> 
+      <tr/><tr/>      
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Hombro:</b></td>
+        <td colspan=2>
+         <div class="slidecontainer">
+            <input type="range" min="0" max="220" value="90" class="slider" id="Shoulder" oninput='sendButtonInput("Shoulder",value)'>
+          </div>
+        </td>
+      </tr>  
+      <tr/><tr/>      
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Base:</b></td>
+        <td colspan=2>
+         <div class="slidecontainer">
+            <input type="range" min="0" max="180" value="90" class="slider" id="Base" oninput='sendButtonInput("Base",value)'>
+          </div>
+        </td>
+      </tr> 
+      <tr/><tr/> 
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Record:</b></td>
+        <td><input type="button" id="Record" value="OFF" ontouchend='onclickButton(this)'></td>
+        <td></td>
+      </tr>
+      <tr/><tr/> 
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Play:</b></td>
+        <td><input type="button" id="Play" value="OFF" ontouchend='onclickButton(this)'></td>
+        <td></td>
+      </tr>
+      <tr/><tr/>
+      <tr>
+        <td style="text-align:left;font-size:25px"><b>Speed:</b></td>
+        <td colspan=2>
+         <div class="slidecontainer">
+            <input type="range" min="0" max="255" value="150" class="slider" id="Speed" oninput='sendButtonInput("Speed",value)'>
+          </div>
+        </td>
+        </tr>  
+        <tr/><tr/>
+    </tr> 
+    <tr>
+      <td></td>
+      <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8679;</span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8678;</span></td>
+      <td class="button"></td>    
+      <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8680;</span></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td class="button" ontouchstart='sendButtonInput("MoveCar","2")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8681;</span></td>
+      <td></td>
+    </tr>
+    <tr/><tr/>
+        <!-- ... (resto de tu contenido HTML) ... -->
+      
+        <div id="consoleOutput"></div>
+      
+        <!-- ... (resto de tu contenido HTML) ... -->
+      
+    <tr>
+    </table>
+    
+  
+    <script>
+      var webSocketCarInputUrl = "ws:\/\/" + window.location.hostname + "/CarInput";
+      var webSocketRobotArmInputUrl = "ws:\/\/" + window.location.hostname + "/RobotArmInput";      
+      var websocketCarInput;
+      var websocketRobotArmInput;
+
+
+        //cambios para el carro 
+        function initCarInputWebSocket()
+        {
+        websocketCarInput = new WebSocket(webSocketCarInputUrl);
+        websocketCarInput.onopen    = function(event)
+        {
+          sendButtonInput("Speed", document.getElementById("Speed").value);                   
+        };
+        websocketCarInput.onclose   = function(event){setTimeout(initCarInputWebSocket, 2000);};
+        websocketCarInput.onmessage = function(event){};        
+      }
+      function initWebSocket() 
+      {
+        initCarInputWebSocket();
+        initRobotArmInputWebSocket();
+      }
+      
+      function initRobotArmInputWebSocket() 
+      {
+        websocketRobotArmInput = new WebSocket(webSocketRobotArmInputUrl);
+        websocketRobotArmInput.onopen    = function(event){};
+        websocketRobotArmInput.onclose   = function(event){setTimeout(initRobotArmInputWebSocket, 2000);};
+        websocketRobotArmInput.onmessage    = function(event)
+        {
+          var keyValue = event.data.split(",");
+          var button = document.getElementById(keyValue[0]);
+          button.value = keyValue[1];
+          if (button.id == "Record" || button.id == "Play")
+          {
+            button.style.backgroundColor = (button.value == "ON" ? "green" : "red");  
+            enableDisableButtonsSliders(button);
+          }
+        };
+      }
+      
+      function sendButtonInput(key, value) 
+      {
+        var data = key + "," + value;
+        websocketRobotArmInput.send(data);
+        websocketCarInput.send(data);
+      }
+      
+      function onclickButton(button) 
+      {
+        button.value = (button.value == "ON") ? "OFF" : "ON" ;        
+        button.style.backgroundColor = (button.value == "ON" ? "green" : "red");          
+        var value = (button.value == "ON") ? 1 : 0 ;
+        sendButtonInput(button.id, value);
+        enableDisableButtonsSliders(button);
+      }
+      
+      function enableDisableButtonsSliders(button)
+      {
+        if(button.id == "Play")
+        {
+          var disabled = "auto";
+          if (button.value == "ON")
+          {
+            disabled = "none";            
+          }
+          document.getElementById("Gripper").style.pointerEvents = disabled;
+          document.getElementById("Elbow").style.pointerEvents = disabled;          
+          document.getElementById("Shoulder").style.pointerEvents = disabled;          
+          document.getElementById("Base").style.pointerEvents = disabled; 
+          document.getElementById("Record").style.pointerEvents = disabled;
+        }
+        if(button.id == "Record")
+        {
+          var disabled = "auto";
+          if (button.value == "ON")
+          {
+            disabled = "none";            
+          }
+          document.getElementById("Play").style.pointerEvents = disabled;
+        }        
+      }
+           
+      window.onload = initWebSocket;
+      document.getElementById("mainTable").addEventListener("touchend", function(event){
+        event.preventDefault()
+      });      
+    </script>
+  </body>    
+</html>
+)HTMLHOMEPAGE";
